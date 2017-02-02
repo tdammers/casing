@@ -16,11 +16,24 @@ Identifier
 , fromHumps
 , fromKebab
 , fromSnake
+, fromWords
 , fromAny
 -- * Generating
-, toCamel, toPascal, toSnake, toQuietSnake, toScreamingSnake, toKebab
+, toCamel
+, toPascal
+, toSnake
+, toQuietSnake
+, toScreamingSnake
+, toKebab
+, toWords
 -- * Shorthand functions
-, pascal, camel, snake, quietSnake, screamingSnake, kebab
+, pascal
+, camel
+, snake
+, quietSnake
+, screamingSnake
+, kebab
+, wordify
 -- * Miscellaneous
 , dropPrefix
 )
@@ -53,6 +66,9 @@ fromHumps = Identifier . go
                 let (z:zs) = go (y:xs)
                 in (x:z):zs
 
+fromWords :: String -> Identifier String
+fromWords = Identifier . words
+
 -- | Convert from @kebab-cased-identifiers@
 fromKebab :: String -> Identifier String
 fromKebab = Identifier . wordsBy (== '-')
@@ -63,7 +79,7 @@ fromSnake = Identifier . wordsBy (== '_')
 
 -- | Convert from anything, including mixed casing.
 fromAny :: String -> Identifier String
-fromAny str = fromHumps str >>= fromKebab >>= fromSnake
+fromAny str = fromHumps str >>= fromKebab >>= fromSnake >>= fromWords
 
 -- | To @PascalCase@
 toPascal :: Identifier String -> String
@@ -89,6 +105,10 @@ toQuietSnake = map toLower . toSnake
 toScreamingSnake :: Identifier String -> String
 toScreamingSnake = map toUpper . toSnake
 
+-- | To @word Case@
+toWords :: Identifier String -> String
+toWords = unwords . unIdentifier
+
 -- | Directly convert to @PascalCase@ through 'fromAny'
 pascal :: String -> String
 pascal = toPascal . fromAny
@@ -112,6 +132,10 @@ screamingSnake = toScreamingSnake . fromAny
 -- | Directly convert to @kebab-case@ through 'fromAny'
 kebab :: String -> String
 kebab = toKebab . fromAny
+
+-- | Directly convert to @word Case@ through 'fromAny'
+wordify :: String -> String
+wordify = toWords . fromAny
 
 -- | Drop the first word from a parsed identifier. Typical usage is between
 -- parsing and writing, e.g.: @toKebab . dropPrefix . fromAny $ "strHelloWorld" == "hello-world"@
