@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveTraversable #-}
 -- | Conversions between several common identifier casing conventions:
 --
 -- - @PascalCase@ - no spacing between words, first letter in word is
@@ -11,7 +12,7 @@
 module Text.Casing
 (
 -- * Types
-Identifier
+Identifier (..)
 -- * Parsing
 , fromHumps
 , fromKebab
@@ -46,7 +47,7 @@ import Control.Applicative
 
 -- | An opaque type that represents a parsed identifier.
 newtype Identifier a = Identifier { unIdentifier :: [a] }
-    deriving (Monad, Functor, Applicative, Show)
+    deriving (Monad, Functor, Applicative, Show, Foldable, Traversable)
 
 wordCase :: String -> String
 wordCase "" = ""
