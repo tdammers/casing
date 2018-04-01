@@ -16,7 +16,7 @@ build-type: Simple
 -- extra-source-files: 
 cabal-version: >=1.10
 
-source-repository bitbucket
+source-repository head
     type: git
     location: https://bitbucket.org/tdammers/casing
 
