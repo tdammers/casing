@@ -16,6 +16,10 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
+source-repository bitbucket
+    type: git
+    location: https://bitbucket.org/tdammers/casing
+
 library
   exposed-modules:     Text.Casing
   -- other-modules:       
