@@ -47,7 +47,7 @@ import Control.Applicative
 
 -- | An opaque type that represents a parsed identifier.
 newtype Identifier a = Identifier { unIdentifier :: [a] }
-    deriving (Monad, Functor, Applicative, Show, Foldable, Traversable)
+    deriving (Monad, Functor, Applicative, Show, Foldable, Traversable, Eq)
 
 wordCase :: String -> String
 wordCase "" = ""
@@ -59,13 +59,30 @@ fromHumps = Identifier . go
     where
         go "" = [""]
         go (x:[]) = [x:[]]
-        go (x:y:xs)
-            | (not $ isUpper x) && (isUpper y) =
-                let (z:zs) = go (y:xs)
-                in [x]:(z:zs)
-            | otherwise =
-                let (z:zs) = go (y:xs)
-                in (x:z):zs
+        go xxs@(x:xs)
+          | isUpper x =
+              case xs of
+                "" ->
+                  [[x]]
+                (y:_) ->
+                  if isUpper y then
+                    [x]:go xs
+                  else
+                    let cur = x:takeWhile (not . isUpper) xs
+                        rem = dropWhile (not . isUpper) xs
+                    in 
+                    if null rem then
+                      [cur]
+                    else
+                      cur:go rem
+          | otherwise =
+              let cur = takeWhile (not . isUpper) xxs
+                  rem = dropWhile (not . isUpper) xxs
+              in
+              if null rem then
+                [cur]
+              else
+                cur:go rem
 
 fromWords :: String -> Identifier String
 fromWords = Identifier . words
