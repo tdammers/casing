@@ -41,8 +41,12 @@ tests = testGroup "tests"
             (fromHumps "HelloAWorld")
       , testCase "multi letter abbrev split" $ do
           assertEqual ""
-            (Identifier ["Hello", "X", "M", "L", "World"])
+            (Identifier ["Hello", "XML", "World"])
             (fromHumps "HelloXMLWorld")
+      , testCase "multi letter acronym at the end" $ do
+          assertEqual ""
+            (Identifier ["Hello", "XML"])
+            (fromHumps "HelloXML")
       , testCase "single letter upper" $ do
           assertEqual ""
             (Identifier ["A"])
@@ -141,7 +145,7 @@ tests = testGroup "tests"
             (fromAny "HelloAWorld")
       , testCase "multi letter abbrev split" $ do
           assertEqual ""
-            (Identifier ["Hello", "X", "M", "L", "World"])
+            (Identifier ["Hello", "XML", "World"])
             (fromAny "HelloXMLWorld")
       , testCase "single letter upper" $ do
           assertEqual ""

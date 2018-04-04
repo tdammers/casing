@@ -61,20 +61,21 @@ fromHumps = Identifier . go
         go (x:[]) = [x:[]]
         go xxs@(x:xs)
           | isUpper x =
-              case xs of
-                "" ->
-                  [[x]]
-                (y:_) ->
-                  if isUpper y then
-                    [x]:go xs
-                  else
-                    let cur = x:takeWhile (not . isUpper) xs
-                        rem = dropWhile (not . isUpper) xs
-                    in 
-                    if null rem then
-                      [cur]
-                    else
-                      cur:go rem
+              let lhs = takeWhile isUpper xxs
+                  rhs = dropWhile isUpper xxs
+              in
+              if null rhs then
+                [lhs]
+              else
+                let curLen = length lhs - 1
+                    cur = take curLen lhs
+                    rec = go rhs
+                    nxt = drop curLen lhs ++ concat (take 1 rec)
+                    rem = drop 1 rec
+                    curL = if null cur then [] else [cur]
+                    nxtL = if null nxt then [] else [nxt]
+                in curL ++ nxtL ++ rem
+
           | otherwise =
               let cur = takeWhile (not . isUpper) xxs
                   rem = dropWhile (not . isUpper) xxs
