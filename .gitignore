@@ -2,3 +2,5 @@
 .cabal*
 /dist
 cabal.sandbox.config
+dist-newstyle
+.ghc.*
