@@ -229,6 +229,10 @@ tests = testGroup "tests"
           assertEqual ""
             "helloWorld"
             (toCamel $ Identifier ["hello", "world"])
+      , testCase "toCamel empty" $ do
+          assertEqual ""
+            ""
+            (toCamel $ Identifier [])
       ]
     , testGroup "toKebab"
       [ testCase "toKebab simple" $ do

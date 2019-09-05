@@ -106,6 +106,7 @@ toPascal = concat . map wordCase . unIdentifier
 
 -- | To @camelCase@
 toCamel :: Identifier String -> String
+toCamel (Identifier []) = ""
 toCamel (Identifier (x:xs)) = concat $ map toLower x:map wordCase xs
 
 -- | To @kebab-case@
