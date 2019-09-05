@@ -18,7 +18,7 @@ cabal-version: >=1.10
 
 source-repository head
     type: git
-    location: https://bitbucket.org/tdammers/casing
+    location: https://github.com/tdammers/casing
 
 library
   exposed-modules: Text.Casing
