@@ -41,7 +41,7 @@ Identifier (..)
 where
 
 import Data.Char
-import Data.List (intersperse)
+import Data.List (intercalate)
 import Data.List.Split (wordsBy)
 import Control.Applicative
 
@@ -58,8 +58,8 @@ fromHumps :: String -> Identifier String
 fromHumps = Identifier . go
     where
         go "" = [""]
-        go (x:[]) = [x:[]]
-        go xxs@(x:xs)
+        go [x] = [[x]]
+        go xxs@(x:_)
           | isUpper x =
               let lhs = takeWhile isUpper xxs
                   rhs = dropWhile isUpper xxs
@@ -71,19 +71,19 @@ fromHumps = Identifier . go
                     cur = take curLen lhs
                     rec = go rhs
                     nxt = drop curLen lhs ++ concat (take 1 rec)
-                    rem = drop 1 rec
+                    _rem = drop 1 rec
                     curL = if null cur then [] else [cur]
                     nxtL = if null nxt then [] else [nxt]
-                in curL ++ nxtL ++ rem
+                in curL ++ nxtL ++ _rem
 
           | otherwise =
               let cur = takeWhile (not . isUpper) xxs
-                  rem = dropWhile (not . isUpper) xxs
+                  _rem = dropWhile (not . isUpper) xxs
               in
-              if null rem then
+              if null _rem then
                 [cur]
               else
-                cur:go rem
+                cur:go _rem
 
 fromWords :: String -> Identifier String
 fromWords = Identifier . words
@@ -102,7 +102,7 @@ fromAny str = fromHumps str >>= fromKebab >>= fromSnake >>= fromWords
 
 -- | To @PascalCase@
 toPascal :: Identifier String -> String
-toPascal = concat . map wordCase . unIdentifier
+toPascal = concatMap wordCase . unIdentifier
 
 -- | To @camelCase@
 toCamel :: Identifier String -> String
@@ -111,11 +111,11 @@ toCamel (Identifier (x:xs)) = concat $ map toLower x:map wordCase xs
 
 -- | To @kebab-case@
 toKebab :: Identifier String -> String
-toKebab = concat . intersperse "-" . map (map toLower) . unIdentifier
+toKebab = intercalate "-" . map (map toLower) . unIdentifier
 
 -- | To @snake_Case@
 toSnake :: Identifier String -> String
-toSnake = concat . intersperse "_" . unIdentifier
+toSnake = intercalate "_" . unIdentifier
 
 -- | To @quiet_snake_case@
 toQuietSnake :: Identifier String -> String
