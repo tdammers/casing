@@ -61,8 +61,7 @@ fromHumps = Identifier . go
         go [x] = [[x]]
         go xxs@(x:_)
           | isUpper x =
-              let lhs = takeWhile isUpper xxs
-                  rhs = dropWhile isUpper xxs
+              let (lhs, rhs) = span isUpper xxs
               in
               if null rhs then
                 [lhs]
@@ -77,8 +76,7 @@ fromHumps = Identifier . go
                 in curL ++ nxtL ++ _rem
 
           | otherwise =
-              let cur = takeWhile (not . isUpper) xxs
-                  _rem = dropWhile (not . isUpper) xxs
+              let (cur, _rem) = span (not . isUpper) xxs
               in
               if null _rem then
                 [cur]
