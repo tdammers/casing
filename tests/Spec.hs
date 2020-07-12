@@ -1,7 +1,6 @@
 module Main where
 
 import Data.Char(isUpper)
--- import Test.QuickCheck.Property
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
@@ -90,6 +89,7 @@ tests = testGroup "tests"
           assertEqual ""
             (Identifier ["a"])
             (fromHumps "a")
+      , testProperty "simplification fromHumps is the same" (\c -> fromHumps c == oldFromHumps c)
       ]
     , testGroup "fromKebab"
       [ testCase "no splits" $
@@ -289,6 +289,5 @@ tests = testGroup "tests"
             "hello_world"
             (toQuietSnake $ Identifier ["Hello", "World"])
       ]
-      , testProperty "simplification fromHumps is the same" (\c -> fromHumps c == oldFromHumps c)
     ]
   ]
