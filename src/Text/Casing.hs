@@ -1,5 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DeriveTraversable, GeneralizedNewtypeDeriving #-}
 -- | Conversions between several common identifier casing conventions:
 --
 -- - @PascalCase@ - no spacing between words, first letter in word is
@@ -41,6 +40,7 @@ Identifier (..)
 where
 
 import Data.Char
+import Data.Semigroup(Semigroup((<>)))
 import Data.List (intercalate)
 import Data.List.Split (wordsBy)
 import Control.Applicative
@@ -49,19 +49,27 @@ import Control.Applicative
 newtype Identifier a = Identifier { unIdentifier :: [a] }
     deriving (Monad, Functor, Applicative, Show, Foldable, Traversable, Eq)
 
+instance Semigroup (Identifier a) where
+    Identifier a <> Identifier b = Identifier (a <> b)
+
 wordCase :: String -> String
 wordCase "" = ""
 wordCase (x:xs) = toUpper x : map toLower xs
+
+_emptyWrap :: [a] -> [[a]]
+_emptyWrap [] = []
+_emptyWrap xs = [xs]
 
 -- | Convert from "humped" casing (@camelCase@ or @PascalCase@)
 fromHumps :: String -> Identifier String
 fromHumps = Identifier . go
     where
         go "" = [""]
-        go [x] = [[x]]
-        go xxs@(x:_)
+        go (x:[]) = [x:[]]
+        go xxs@(x:xs)
           | isUpper x =
-              let (lhs, rhs) = span isUpper xxs
+              let lhs = takeWhile isUpper xxs
+                  rhs = dropWhile isUpper xxs
               in
               if null rhs then
                 [lhs]
@@ -70,18 +78,19 @@ fromHumps = Identifier . go
                     cur = take curLen lhs
                     rec = go rhs
                     nxt = drop curLen lhs ++ concat (take 1 rec)
-                    _rem = drop 1 rec
+                    rem = drop 1 rec
                     curL = if null cur then [] else [cur]
                     nxtL = if null nxt then [] else [nxt]
-                in curL ++ nxtL ++ _rem
+                in curL ++ nxtL ++ rem
 
           | otherwise =
-              let (cur, _rem) = span (not . isUpper) xxs
+              let cur = takeWhile (not . isUpper) xxs
+                  rem = dropWhile (not . isUpper) xxs
               in
-              if null _rem then
+              if null rem then
                 [cur]
               else
-                cur:go _rem
+                cur:go rem
 
 fromWords :: String -> Identifier String
 fromWords = Identifier . words
@@ -105,7 +114,7 @@ toPascal = concatMap wordCase . unIdentifier
 -- | To @camelCase@
 toCamel :: Identifier String -> String
 toCamel (Identifier []) = ""
-toCamel (Identifier (x:xs)) = concat $ map toLower x:map wordCase xs
+toCamel (Identifier (x:xs)) = concat (map toLower x : map wordCase xs)
 
 -- | To @kebab-case@
 toKebab :: Identifier String -> String

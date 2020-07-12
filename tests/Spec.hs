@@ -7,211 +7,243 @@ import Text.Casing
 main :: IO ()
 main = defaultMain tests
 
+-- Test if the new "fromHumps" is equivalent to the old one.
+oldFromHumps :: String -> Identifier String
+oldFromHumps = Identifier . go
+    where
+        go "" = [""]
+        go (x:[]) = [x:[]]
+        go xxs@(x:xs)
+          | isUpper x =
+              let lhs = takeWhile isUpper xxs
+                  rhs = dropWhile isUpper xxs
+              in
+              if null rhs then
+                [lhs]
+              else
+                let curLen = length lhs - 1
+                    cur = take curLen lhs
+                    rec = go rhs
+                    nxt = drop curLen lhs ++ concat (take 1 rec)
+                    rem = drop 1 rec
+                    curL = if null cur then [] else [cur]
+                    nxtL = if null nxt then [] else [nxt]
+                in curL ++ nxtL ++ rem
+
+          | otherwise =
+              let cur = takeWhile (not . isUpper) xxs
+                  rem = dropWhile (not . isUpper) xxs
+              in
+              if null rem then
+                [cur]
+              else
+                cur:go rem
+
 tests :: TestTree
 tests = testGroup "tests"
   [ testGroup "parsing"
     [ testGroup "fromHumps"
-      [ testCase "no splits 1" $ do
+      [ testCase "no splits 1" $
           assertEqual ""
             (Identifier ["hello"])
             (fromHumps "hello")
-      , testCase "no splits 2" $ do
+      , testCase "no splits 2" $
           assertEqual ""
             (Identifier ["Hello"])
             (fromHumps "Hello")
-      , testCase "non-alpha, no split" $ do
+      , testCase "non-alpha, no split" $
           assertEqual ""
             (Identifier ["-hello"])
             (fromHumps "-hello")
-      , testCase "non-alpha, split" $ do
+      , testCase "non-alpha, split" $
           assertEqual ""
             (Identifier ["-hello-", "World"])
             (fromHumps "-hello-World")
-      , testCase "simple split camel" $ do
+      , testCase "simple split camel" $
           assertEqual ""
             (Identifier ["hello", "World"])
             (fromHumps "helloWorld")
-      , testCase "simple split pascal" $ do
+      , testCase "simple split pascal" $
           assertEqual ""
             (Identifier ["Hello", "World"])
             (fromHumps "HelloWorld")
-      , testCase "single letter abbrev split" $ do
+      , testCase "single letter abbrev split" $
           assertEqual ""
             (Identifier ["Hello", "A", "World"])
             (fromHumps "HelloAWorld")
-      , testCase "multi letter abbrev split" $ do
+      , testCase "multi letter abbrev split" $
           assertEqual ""
             (Identifier ["Hello", "XML", "World"])
             (fromHumps "HelloXMLWorld")
-      , testCase "multi letter acronym at the end" $ do
+      , testCase "multi letter acronym at the end" $
           assertEqual ""
             (Identifier ["Hello", "XML"])
             (fromHumps "HelloXML")
-      , testCase "single letter upper" $ do
+      , testCase "single letter upper" $
           assertEqual ""
             (Identifier ["A"])
             (fromHumps "A")
-      , testCase "single letter lower" $ do
+      , testCase "single letter lower" $
           assertEqual ""
             (Identifier ["a"])
             (fromHumps "a")
       ]
     , testGroup "fromKebab"
-      [ testCase "no splits" $ do
+      [ testCase "no splits" $
           assertEqual ""
             (Identifier ["hello"])
             (fromKebab "hello")
-      , testCase "single split" $ do
+      , testCase "single split" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromKebab "hello-world")
-      , testCase "leading split" $ do
+      , testCase "leading split" $
           assertEqual ""
             (Identifier ["world"])
             (fromKebab "-world")
-      , testCase "trailing split" $ do
+      , testCase "trailing split" $
           assertEqual ""
             (Identifier ["world"])
             (fromKebab "world-")
-      , testCase "multiple dashes" $ do
+      , testCase "multiple dashes" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromKebab "hello---world")
       ]
     , testGroup "fromSnake"
-      [ testCase "no splits" $ do
+      [ testCase "no splits" $
           assertEqual ""
             (Identifier ["hello"])
             (fromSnake "hello")
-      , testCase "single split" $ do
+      , testCase "single split" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromSnake "hello_world")
-      , testCase "leading split" $ do
+      , testCase "leading split" $
           assertEqual ""
             (Identifier ["world"])
             (fromSnake "_world")
-      , testCase "trailing split" $ do
+      , testCase "trailing split" $
           assertEqual ""
             (Identifier ["world"])
             (fromSnake "world_")
-      , testCase "multiple dashes" $ do
+      , testCase "multiple dashes" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromSnake "hello___world")
       ]
     , testGroup "fromWords"
-      [ testCase "no splits" $ do
+      [ testCase "no splits" $
           assertEqual ""
             (Identifier ["hello"])
             (fromWords "hello")
-      , testCase "single split" $ do
+      , testCase "single split" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromWords "hello world")
-      , testCase "leading split" $ do
+      , testCase "leading split" $
           assertEqual ""
             (Identifier ["world"])
             (fromWords " world")
-      , testCase "trailing split" $ do
+      , testCase "trailing split" $
           assertEqual ""
             (Identifier ["world"])
             (fromWords "world ")
-      , testCase "multiple dashes" $ do
+      , testCase "multiple dashes" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromWords "hello   world")
       ]
     , testGroup "fromAny"
-      [ testCase "no splits 1" $ do
+      [ testCase "no splits 1" $
           assertEqual ""
             (Identifier ["hello"])
             (fromAny "hello")
-      , testCase "no splits 2" $ do
+      , testCase "no splits 2" $
           assertEqual ""
             (Identifier ["Hello"])
             (fromAny "Hello")
-      , testCase "simple split camel" $ do
+      , testCase "simple split camel" $
           assertEqual ""
             (Identifier ["hello", "World"])
             (fromAny "helloWorld")
-      , testCase "simple split pascal" $ do
+      , testCase "simple split pascal" $
           assertEqual ""
             (Identifier ["Hello", "World"])
             (fromAny "HelloWorld")
-      , testCase "single letter abbrev split" $ do
+      , testCase "single letter abbrev split" $
           assertEqual ""
             (Identifier ["Hello", "A", "World"])
             (fromAny "HelloAWorld")
-      , testCase "multi letter abbrev split" $ do
+      , testCase "multi letter abbrev split" $
           assertEqual ""
             (Identifier ["Hello", "XML", "World"])
             (fromAny "HelloXMLWorld")
-      , testCase "single letter upper" $ do
+      , testCase "single letter upper" $
           assertEqual ""
             (Identifier ["A"])
             (fromAny "A")
-      , testCase "single letter lower" $ do
+      , testCase "single letter lower" $
           assertEqual ""
             (Identifier ["a"])
             (fromAny "a")
-      , testCase "no splits" $ do
+      , testCase "no splits" $
           assertEqual ""
             (Identifier ["hello"])
             (fromAny "hello")
-      , testCase "single split" $ do
+      , testCase "single split" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromAny "hello-world")
-      , testCase "leading split" $ do
+      , testCase "leading split" $
           assertEqual ""
             (Identifier ["world"])
             (fromAny "-world")
-      , testCase "trailing split" $ do
+      , testCase "trailing split" $
           assertEqual ""
             (Identifier ["world"])
             (fromAny "world-")
-      , testCase "multiple dashes" $ do
+      , testCase "multiple dashes" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromAny "hello---world")
-      , testCase "no splits" $ do
+      , testCase "no splits" $
           assertEqual ""
             (Identifier ["hello"])
             (fromAny "hello")
-      , testCase "single split" $ do
+      , testCase "single split" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromAny "hello_world")
-      , testCase "leading split" $ do
+      , testCase "leading split" $
           assertEqual ""
             (Identifier ["world"])
             (fromAny "_world")
-      , testCase "trailing split" $ do
+      , testCase "trailing split" $
           assertEqual ""
             (Identifier ["world"])
             (fromAny "world_")
-      , testCase "multiple dashes" $ do
+      , testCase "multiple dashes" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromAny "hello___world")
-      , testCase "no splits" $ do
+      , testCase "no splits" $
           assertEqual ""
             (Identifier ["hello"])
             (fromAny "hello")
-      , testCase "single split" $ do
+      , testCase "single split" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromAny "hello world")
-      , testCase "leading split" $ do
+      , testCase "leading split" $
           assertEqual ""
             (Identifier ["world"])
             (fromAny " world")
-      , testCase "trailing split" $ do
+      , testCase "trailing split" $
           assertEqual ""
             (Identifier ["world"])
             (fromAny "world ")
-      , testCase "multiple dashes" $ do
+      , testCase "multiple dashes" $
           assertEqual ""
             (Identifier ["hello", "world"])
             (fromAny "hello   world")
@@ -219,37 +251,37 @@ tests = testGroup "tests"
     ]
   , testGroup "writing"
     [ testGroup "toPascal"
-      [ testCase "toPascal simple" $ do
+      [ testCase "toPascal simple" $
           assertEqual ""
             "HelloWorld"
             (toPascal $ Identifier ["hello", "world"])
       ]
     , testGroup "toCamel"
-      [ testCase "toCamel simple" $ do
+      [ testCase "toCamel simple" $
           assertEqual ""
             "helloWorld"
             (toCamel $ Identifier ["hello", "world"])
-      , testCase "toCamel empty" $ do
+      , testCase "toCamel empty" $
           assertEqual ""
             ""
             (toCamel $ Identifier [])
       ]
     , testGroup "toKebab"
-      [ testCase "toKebab simple" $ do
+      [ testCase "toKebab simple" $
           assertEqual ""
             "hello-world"
             (toKebab $ Identifier ["hello", "world"])
       ]
     , testGroup "toSnake"
-      [ testCase "toSnake simple" $ do
+      [ testCase "toSnake simple" $
           assertEqual ""
             "hello_world"
             (toSnake $ Identifier ["hello", "world"])
-      , testCase "toScreamingSnake simple" $ do
+      , testCase "toScreamingSnake simple" $
           assertEqual ""
             "HELLO_WORLD"
             (toScreamingSnake $ Identifier ["hello", "world"])
-      , testCase "toQuietSnake simple" $ do
+      , testCase "toQuietSnake simple" $
           assertEqual ""
             "hello_world"
             (toQuietSnake $ Identifier ["Hello", "World"])
