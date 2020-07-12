@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveTraversable, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE BangPatterns, DeriveTraversable, GeneralizedNewtypeDeriving #-}
 -- | Conversions between several common identifier casing conventions:
 --
 -- - @PascalCase@ - no spacing between words, first letter in word is
@@ -56,41 +56,29 @@ wordCase :: String -> String
 wordCase "" = ""
 wordCase (x:xs) = toUpper x : map toLower xs
 
-_emptyWrap :: [a] -> [[a]]
-_emptyWrap [] = []
-_emptyWrap xs = [xs]
-
 -- | Convert from "humped" casing (@camelCase@ or @PascalCase@)
 fromHumps :: String -> Identifier String
-fromHumps = Identifier . go
-    where
-        go "" = [""]
-        go (x:[]) = [x:[]]
-        go xxs@(x:xs)
-          | isUpper x =
-              let lhs = takeWhile isUpper xxs
-                  rhs = dropWhile isUpper xxs
-              in
-              if null rhs then
-                [lhs]
-              else
-                let curLen = length lhs - 1
-                    cur = take curLen lhs
-                    rec = go rhs
-                    nxt = drop curLen lhs ++ concat (take 1 rec)
-                    rem = drop 1 rec
-                    curL = if null cur then [] else [cur]
-                    nxtL = if null nxt then [] else [nxt]
-                in curL ++ nxtL ++ rem
+fromHumps = Identifier . _fromHumps
 
-          | otherwise =
-              let cur = takeWhile (not . isUpper) xxs
-                  rem = dropWhile (not . isUpper) xxs
-              in
-              if null rem then
-                [cur]
-              else
-                cur:go rem
+_fromHumps :: String -> [String]
+_fromHumps "" = [""]
+_fromHumps c = _fromHumps' c
+
+_unsnoc :: [a] -> a -> ([a], a)
+_unsnoc [] x = ([], x)
+_unsnoc (y:ys) x = let !(za, zb) = _unsnoc ys y in (x:za, zb)
+
+_fromHumps' :: String -> [String]
+_fromHumps' [] = []
+_fromHumps' ca@(c:cs)
+    | isUpper c = go (span isUpper cs)
+    | otherwise = let (ba, bb) = break isUpper cs in (c:ba) : _fromHumps' bb
+    where go (_,[]) = [ca]
+          go (ls, rs) = addlsa ((l:y) : ys)
+              where !(lsa, l) = _unsnoc ls c
+                    !(y:ys) = _fromHumps' rs
+                    addlsa | null lsa = id
+                           | otherwise = (lsa :)
 
 fromWords :: String -> Identifier String
 fromWords = Identifier . words
@@ -114,7 +102,7 @@ toPascal = concatMap wordCase . unIdentifier
 -- | To @camelCase@
 toCamel :: Identifier String -> String
 toCamel (Identifier []) = ""
-toCamel (Identifier (x:xs)) = concat (map toLower x : map wordCase xs)
+toCamel (Identifier (x:xs)) = map toLower x ++ concatMap wordCase xs
 
 -- | To @kebab-case@
 toKebab :: Identifier String -> String
@@ -166,5 +154,5 @@ wordify = toWords . fromAny
 
 -- | Drop the first word from a parsed identifier. Typical usage is between
 -- parsing and writing, e.g.: @toKebab . dropPrefix . fromAny $ "strHelloWorld" == "hello-world"@
-dropPrefix :: Identifier String -> Identifier String
-dropPrefix = Identifier . drop 1 . unIdentifier
+dropPrefix :: Identifier [a] -> Identifier [a]
+dropPrefix = fmap (drop 1)
